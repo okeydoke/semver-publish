@@ -10,8 +10,15 @@
     "type": "git",
     "url": "git://github.com/okeydoke/semver-publish.git"
   },
+  "scripts": {
+    "publish": "node index.js"
+  },
+  "bin": {
+    "semver-publish": "index.js"
+  },
   "dependencies": {
-    "aws-sdk": "^2.7.10"
+    "aws-sdk": "^2.7.10",
+    "minimist": "^1.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.9.1",
