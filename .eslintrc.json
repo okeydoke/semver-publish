@@ -1,0 +1,28 @@
+{
+  "extends": "airbnb",
+  "settings": {
+    "import/resolver": "webpack"
+  },
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
+  "ecmaFeatures": {
+    "jsx": true
+  },
+  "rules": {
+    "linebreak-style": 0,
+    "no-var": 1,
+    "new-cap": 0,
+    "vars-on-top": 0,
+    "arrow-body-style": [0, "as-needed"],
+    "comma-dangle": [0, "never"],
+    "no-unused-vars": [0, {"vars": "local", "args": "none"}],
+    "react/react-in-jsx-scope": 0, // React is usually a Global
+    "react/prop-types": 1, // making a warning for now as it affects stateless functional components,
+    "react/jsx-indent": 1, // overly restrictive with things like ternary operator, warning for now
+    "camelcase": [0, {"properties": "never"}] // unfortunately .NET has snake case
+  }
+}
