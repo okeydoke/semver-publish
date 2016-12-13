@@ -1,15 +1,32 @@
+const { newClient, existingContent, upload } = require('./src/s3');
 const minimist = require('minimist');
+const util = require('util');
 
-const args = process.argv.slice(2);
-const argMap = minimist(args); // expects arguments in --key=value format
+const argMap = minimist(process.argv.slice(2)); // expects arguments in --key=value format
+const { USE_ROLE } = process.env;
 
-let { accessKeyId, secretAccessKey, bucket, src, dest } = argMap;
-const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_SRC, AWS_DEST } = process.env;
+const { accessKeyId, secretAccessKey, bucket, src, dest, region } = argMap;
 
-accessKeyId = accessKeyId || AWS_ACCESS_KEY_ID;
-secretAccessKey = secretAccessKey || AWS_SECRET_ACCESS_KEY;
-bucket = bucket || AWS_BUCKET;
-src = src || AWS_SRC;
-dest = dest || AWS_DEST;
+const requiredArgs = [
+  'bucket',
+  'src',
+  'dest',
+  'region'
+].filter(a => argMap[a] === undefined);
 
-console.log(argMap);
+if (requiredArgs.length > 0) {
+  console.error(`Missing argument/s: ${requiredArgs.join(', ')}`, '\n');
+  process.exit(1);
+}
+
+if (!USE_ROLE && (!accessKeyId || !secretAccessKey)) {
+  console.error('Missing credentials\n');
+  process.exit(1);
+}
+
+existingContent(bucket, newClient({ accessKeyId, secretAccessKey })).then(contents => {
+  console.log(util.inspect(contents, { showHidden: true, depth: null, colors: true }));
+  
+}).catch(error => {
+  console.log({ error });
+});

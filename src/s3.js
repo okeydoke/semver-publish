@@ -1,14 +1,10 @@
-const S3 = require('aws-sdk/clients/s3');
+const AWS = require('aws-sdk');
+
 const fs = require('fs');
 const path = require('path');
 
 function newClient(options) {
-  return new S3.createClient({
-    s3Options: {
-      accessKeyId: options.accessKeyId,
-      secretAccessKey: options.secretAccessKey
-    }
-  });
+  return new AWS.S3(options);
 }
 
 /**
@@ -17,41 +13,22 @@ function newClient(options) {
  * @param  {Object}   s3Client    S3 client
  * @param  {Object}   options
  */
-function existingContent(folderPath, s3Client, options) {
-  const { bucket, src } = options;
-  const MaxKeys = 0; // max amount of objects return in response (0 = infinite)
+function existingContent(bucket, s3Client) {
+  const MaxKeys = 1000000; // max amount of objects return in response
 
   return new Promise((resolve, reject) => {
     const params = {
-      s3Params: {
-        Bucket: bucket,
-        Prefix: folderPath,
-        MaxKeys
-      }
+      MaxKeys,
+      Bucket: bucket,
+      Prefix: 'events'
     };
 
     console.log('Checking for existing content');
-    const exists = s3Client.listObjects(params);
-
-    exists.on('error', err => {
-      reject(err);
-    });
-
-    const contents = [];
-
-    exists.on('data', data => {
-      if (data.Contents) {
-        data.Contents.forEach(content => {
-          contents.push({
-            key: content.Key,
-            lastModified: content.LastModified
-          });
-        });
+    const exists = s3Client.listObjects(params, (err, data) => {
+      if (err) {
+        reject(err);
       }
-    });
-
-    exists.on('end', () => {
-      resolve(contents);
+      resolve(data);
     });
   });
 }
@@ -98,4 +75,4 @@ module.exports = {
   newClient,
   existingContent,
   upload
-}
+};
