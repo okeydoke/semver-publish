@@ -2,6 +2,7 @@ const AWS = require('aws-sdk');
 
 const fs = require('fs');
 const path = require('path');
+const mime = require('mime-types');
 
 function newClient(options) {
   return new AWS.S3(options);
@@ -13,66 +14,76 @@ function newClient(options) {
  * @param  {Object}   s3Client    S3 client
  * @param  {Object}   options
  */
-function existingContent(bucket, s3Client) {
-  const MaxKeys = 1000000; // max amount of objects return in response
+function getExistingFiles(Bucket, prefix, s3Client) {
+  const MaxKeys = 100000; // max amount of objects return in response
+
+  const Prefix = prefix.indexOf('/') !== -1 ? prefix : `${prefix}/`; // add trailing slash if needed
+  const params = {
+    Bucket,
+    MaxKeys,
+    Prefix
+  };
 
   return new Promise((resolve, reject) => {
-    const params = {
-      MaxKeys,
-      Bucket: bucket,
-      Prefix: 'events'
-    };
-
-    console.log('Checking for existing content');
+    console.log('Checking for existing content...');
     const exists = s3Client.listObjects(params, (err, data) => {
       if (err) {
-        reject(err);
+        return reject(err);
       }
-      resolve(data);
+
+      const regex = new RegExp(`^${Prefix}`);
+      const files = data.Contents
+        .filter(c => c.Size > 0) // remove folders
+        .map(c => c.Key.replace(regex, '')); // remove the prefix
+
+      return resolve(files);
     });
   });
 }
 
 
-function upload(folderPath, s3Client, options) {
-  const { bucket, src } = options;
+function uploadFile(Bucket, fileName, src, dest, s3Client) {
+  if (!Bucket) {
+    throw new Error('`Bucket` argument required');
+  }
+  if (!fileName) {
+    throw new Error('`fileName` argument required');
+  }
+  if (!src) {
+    throw new Error('`src` argument required');
+  }
+  if (!dest) {
+    throw new Error('`dest` argument required');
+  }
+
+  const fileBuffer = fs.readFileSync(path.resolve(src, fileName));
+  const fileExtension = (/\.[\w\d]+$/.exec(src) || [])[0];
+  const prefix = dest.charAt(dest.length - 1) !== '/' ? `${dest}/` : dest; // add slash if needed
+  const Key = `${prefix + fileName}`;
+
+  const params = {
+    Bucket,
+    Key,
+    ACL: 'public-read',
+    Body: fileBuffer,
+    CacheControl: 'max-age=31536000',
+    ContentType: mime.lookup(fileExtension) || 'application/octet-stream'
+  };
 
   return new Promise((resolve, reject) => {
-    const params = {
-      s3Params: {
-        Bucket: bucket,
-        ACL: 'public-read'
+    console.log(`Uploading to ${Bucket}:${Key}`);
+
+    s3Client.upload(params, (err, data) => {
+      if (err) {
+        return reject(err);
       }
-    };
-
-    let uploader;
-
-    // Check if src is directory or file and use s3 accordingly
-    if (fs.lstatSync(src).isDirectory()) {
-      params.localDir = src;
-      params.s3Params.Prefix = folderPath;
-      uploader = s3Client.uploadDir(params);
-    } else {
-      const fileName = path.basename(src);
-      params.localFile = src;
-      params.s3Params.Key = path.join(folderPath, fileName);
-      uploader = s3Client.uploadFile(params);
-    }
-
-    console.log(`Uploading to ${bucket}:${folderPath}`);
-
-    uploader.on('error', err => {
-      reject(err);
-    });
-
-    uploader.on('end', () => {
-      resolve();
+      return resolve(data);
     });
   });
 }
 
 module.exports = {
   newClient,
-  existingContent,
-  upload
+  getExistingFiles,
+  uploadFile
 };
