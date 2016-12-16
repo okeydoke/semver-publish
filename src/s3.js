@@ -1,11 +1,18 @@
 const AWS = require('aws-sdk');
-
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
+const { debugMessage } = require('./utils');
 
 function newClient(options) {
   return new AWS.S3(options);
+}
+
+function appendFolderSlash(folder) { // append slash if needed
+  return folder.charAt(folder.length - 1) !== '/'
+          && folder.length > 0
+          ? `${folder}/`
+          : folder;
 }
 
 /**
@@ -14,19 +21,22 @@ function newClient(options) {
  * @param  {Object}   s3Client    S3 client
  * @param  {Object}   options
  */
-function getExistingFiles(Bucket, prefix, s3Client) {
+function getExistingFiles(Bucket, folder = '', s3Client) {
   const MaxKeys = 100000; // max amount of objects return in response
+  const Prefix = appendFolderSlash(folder);
 
-  const Prefix = prefix.indexOf('/') !== -1 ? prefix : `${prefix}/`; // add trailing slash if needed
   const params = {
     Bucket,
     MaxKeys,
     Prefix
   };
 
+  debugMessage('getExistingFiles params', params);
+
   return new Promise((resolve, reject) => {
     console.log('Checking for existing content...');
     const exists = s3Client.listObjects(params, (err, data) => {
+      debugMessage('uploadFile:listObjects (err, data)', err, data);
       if (err) {
         return reject(err);
       }
@@ -41,8 +51,7 @@ function getExistingFiles(Bucket, prefix, s3Client) {
   });
 }
 
-
-function uploadFile(Bucket, fileName, src, dest, s3Client) {
+function uploadFile(Bucket, fileName, src, folder = '', s3Client) {
   if (!Bucket) {
     throw new Error('`Bucket` argument required');
   }
@@ -52,13 +61,10 @@ function uploadFile(Bucket, fileName, src, dest, s3Client) {
   if (!src) {
     throw new Error('`src` argument required');
   }
-  if (!dest) {
-    throw new Error('`dest` argument required');
-  }
 
   const fileBuffer = fs.readFileSync(path.resolve(src, fileName));
   const fileExtension = (/\.[\w\d]+$/.exec(src) || [])[0];
-  const prefix = dest.charAt(dest.length - 1) !== '/' ? `${dest}/` : dest; // add slash if needed
+  const prefix = appendFolderSlash(folder);
   const Key = `${prefix + fileName}`;
 
   const params = {
@@ -70,10 +76,13 @@ function uploadFile(Bucket, fileName, src, dest, s3Client) {
     ContentType: mime.lookup(fileExtension) || 'application/octet-stream'
   };
 
+  debugMessage('uploadFile params', params);
+
   return new Promise((resolve, reject) => {
-    console.log(`Uploading to ${Bucket}:${Key}`);
+    console.log(`Uploading ${Bucket}:${Key}`);
 
     s3Client.upload(params, (err, data) => {
+      debugMessage('uploadFile:upload (err, data)', err, data);
       if (err) {
         return reject(err);
       }
@@ -83,7 +92,8 @@ function uploadFile(Bucket, fileName, src, dest, s3Client) {
 }
 
 module.exports = {
-  newClient,
+  appendFolderSlash,
   getExistingFiles,
+  newClient,
   uploadFile
 };
