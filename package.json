@@ -18,8 +18,10 @@
   },
   "dependencies": {
     "aws-sdk": "^2.7.10",
+    "fs-extra": "^1.0.0",
     "mime-types": "^2.1.13",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "replace-in-file": "^2.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.9.1",
