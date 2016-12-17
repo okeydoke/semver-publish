@@ -75,7 +75,7 @@ getExistingS3Files(bucket, folder, s3Client)
 
     console.log('Generating SEMVER latest versions...');
     uploaded.forEach(f => {
-      const filename = f.key.replace(folderPrefix(folder), '');
+      const filename = f.key.replace(appendFolderSlash(folder), '');
       const semver = getSemver(filename);
       const latestV = `latest-v${getSemverMajor(semver)}`;
       const newName = filename.replace(semver, latestV);
