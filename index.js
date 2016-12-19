@@ -10,6 +10,10 @@ const {
   intersection
 } = require('./src/utils');
 
+const {
+  invalidate
+} = require('./src/invalidate');
+
 const fs = require('fs-extra');
 const minimist = require('minimist');
 const path = require('path');
@@ -75,6 +79,7 @@ getExistingS3Files(bucket, folder, s3Client)
 
     console.log('Generating SEMVER latest versions...');
     uploaded.forEach(f => {
+      // TODO split this out to make it testable
       const filename = f.key.replace(appendFolderSlash(folder), '');
       const semver = getSemver(filename);
       const latestV = `latest-v${getSemverMajor(semver)}`;
@@ -89,6 +94,9 @@ getExistingS3Files(bucket, folder, s3Client)
       .then(() => {
         console.log(`Removing temporary file: ${newName}`);
         fs.removeSync(newNamePath);
+      })
+      .then(() => {
+        return invalidate(bucket, folder + newName, { accessKeyId, secretAccessKey });
       })
       .catch(err => console.log(err));
     });
