@@ -66,14 +66,15 @@ function uploadFile(Bucket, fileName, src, folder = '', s3Client) {
   const fileExtension = (/\.[\w\d]+$/.exec(src) || [])[0];
   const prefix = appendFolderSlash(folder);
   const Key = `${prefix + fileName}`;
-
+  const ContentType = mime.lookup(fileExtension) || 'application/octet-stream';
+console.log(src, fileExtension, ContentType);
   const params = {
     Bucket,
+    ContentType,
     Key,
     ACL: 'public-read',
     Body: fileBuffer,
-    CacheControl: 'max-age=31536000',
-    ContentType: mime.lookup(fileExtension) || 'application/octet-stream'
+    CacheControl: 'max-age=31536000'
   };
 
   debugMessage('uploadFile params', params);
