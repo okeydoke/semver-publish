@@ -4,3 +4,5 @@ Upload's directories/files to S3 maintaining semver safely by not allowing overw
 TODO
 Handle file paths other than source maps
 Check CSS sourcemaps path renaming
+handle multiple semver patterns in fileName
+Semver minor latest version
