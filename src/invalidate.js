@@ -26,7 +26,7 @@ function invalidate(bucketId, items, options) {
     };
 
     new AWS.CloudFront(options).createInvalidation(params, (err, data) => {
-      debugMessage('uploadFile:listObjects (err, data)', err, data);
+      debugMessage('invalidate:createInvalidation (err, data)', err, data);
       if (err) {
         console.log(err);
         return reject(err);

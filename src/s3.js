@@ -37,7 +37,13 @@ function getExistingFiles(Bucket, folder = '', s3Client) {
     console.log('Checking for existing content...');
     const exists = s3Client.listObjects(params, (err, data) => {
       debugMessage('uploadFile:listObjects (err, data)', err, data);
+
       if (err) {
+        // need to handle 403 differently as the api can return then when trying to list an object
+        // that doesn't exist due and a lack of permissions to preventing leaking of information
+        if (err.statusCode === 403) {
+          return resolve(null);
+        }
         return reject(err);
       }
 
@@ -51,23 +57,23 @@ function getExistingFiles(Bucket, folder = '', s3Client) {
   });
 }
 
-function uploadFile(Bucket, fileName, src, folder = '', s3Client) {
+function uploadFile(Bucket, fileName, destFolder, folder = '', s3Client) {
   if (!Bucket) {
     throw new Error('`Bucket` argument required');
   }
   if (!fileName) {
     throw new Error('`fileName` argument required');
   }
-  if (!src) {
+  if (!destFolder) {
     throw new Error('`src` argument required');
   }
 
-  const fileBuffer = fs.readFileSync(path.resolve(src, fileName));
-  const fileExtension = (/\.[\w\d]+$/.exec(src) || [])[0];
+  const fileBuffer = fs.readFileSync(path.resolve(destFolder, fileName));
+  const fileExtension = (/\.[\w\d]+$/.exec(fileName) || [])[0];
   const prefix = appendFolderSlash(folder);
   const Key = `${prefix + fileName}`;
   const ContentType = mime.lookup(fileExtension) || 'application/octet-stream';
-console.log(src, fileExtension, ContentType);
+
   const params = {
     Bucket,
     ContentType,

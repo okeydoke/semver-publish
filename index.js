@@ -22,6 +22,7 @@ const replace = require('replace-in-file');
 
 const argMap = minimist(process.argv.slice(2)); // expects arguments in --key=value format
 const { USE_ROLE } = process.env;
+const region = 'us-east-1';
 
 const { accessKeyId, secretAccessKey, bucket, folder } = argMap;
 const src = argMap.src || './dist';
@@ -45,9 +46,9 @@ if (!USE_ROLE && (!accessKeyId || !secretAccessKey)) {
 }
 
 const getExistingFiles = directory => fs.readdirSync(path.resolve(directory));
-const s3Client = newClient({ accessKeyId, secretAccessKey });
+const s3Client = newClient({ accessKeyId, secretAccessKey, region });
 
-function existing(files) {
+function checkExisting(files) {
   const existingFiles = getExistingFiles(src);
   const intersect = intersection(existingFiles, files);
   if (intersect.length > 0) {
@@ -56,26 +57,25 @@ function existing(files) {
   return existingFiles;
 }
 
+function uploadFiles(files) {
+  return Promise.all(files.map(file => s3Upload(bucket, file, src, folder, s3Client)));
+}
+
 function getSemver(fileName = '') {
   // TOOD handle multiple semver patterns in fileName - throw ambiguous semver error
   return (/\d+\.\d+\.\d+/.exec(fileName) || [])[0];
 }
 
 function getSemverMajor(semver) {
-  return semver.split('.')[0];
+  return semver ? semver.split('.')[0] : '';
 }
 
 getExistingS3Files(bucket, folder, s3Client)
-  .then(existing)
-  .then(files => {
-    const uploads = files.map(file => s3Upload(bucket, file, src, folder, s3Client));
-    return Promise.all(uploads);
-  })
-  .catch(error => {
-    errorMessage(error.message);
-  })
+  .then(checkExisting)
+  .then(uploadFiles)
+  .catch(error => errorMessage(error.message))
   .then(uploaded => {
-    console.log('Successfully uploaded files');
+    console.log('Successfully uploaded files\n', uploaded.map(f => f.key).join('\n'));
 
     console.log('Generating SEMVER latest versions...');
     uploaded.forEach(f => {
