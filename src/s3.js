@@ -2,17 +2,10 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
-const { debugMessage } = require('./utils');
+const { appendFolderSlash, debugMessage } = require('./utils');
 
 function newClient(options) {
   return new AWS.S3(options);
-}
-
-function appendFolderSlash(folder) { // append slash if needed
-  return folder.charAt(folder.length - 1) !== '/'
-          && folder.length > 0
-          ? `${folder}/`
-          : folder;
 }
 
 /**

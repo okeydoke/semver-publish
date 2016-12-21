@@ -1,14 +1,16 @@
 const {
-  appendFolderSlash,
   newClient,
   getExistingFiles: getExistingS3Files,
   uploadFile: s3Upload
 } = require('./src/s3');
 
 const {
+  appendFolderSlash,
   debugMessage,
   intersection
 } = require('./src/utils');
+
+debugMessage('invalidate:params',  { depth: null });
 
 const {
   invalidate
@@ -28,8 +30,8 @@ const { accessKeyId, secretAccessKey, bucket, folder } = argMap;
 const src = argMap.src || './dist';
 const EXISTING_FILE_ERROR_MSG = 'Failed to upload! Destination path contains existing content';
 
-function errorMessage(message) {
-  console.error(`${message}\n`);
+function errorMessage(error) {
+  console.error(`${error.message || error}\n`);
   process.exit(1);
 }
 
@@ -70,13 +72,17 @@ function getSemverMajor(semver) {
   return semver ? semver.split('.')[0] : '';
 }
 
+function uploadSuccessful(files) {
+  console.log('Successfully uploaded files\n', files.map(f => f.key).join('\n'));
+  return files;
+}
+
 getExistingS3Files(bucket, folder, s3Client)
   .then(checkExisting)
   .then(uploadFiles)
-  .catch(error => errorMessage(error.message))
+  .catch(errorMessage)
+  .then(uploadSuccessful)
   .then(uploaded => {
-    console.log('Successfully uploaded files\n', uploaded.map(f => f.key).join('\n'));
-
     console.log('Generating SEMVER latest versions...');
     uploaded.forEach(f => {
       // TODO split this out to make it testable
@@ -96,7 +102,7 @@ getExistingS3Files(bucket, folder, s3Client)
         fs.removeSync(newNamePath);
       })
       .then(() => {
-        return invalidate(bucket, folder + newName, { accessKeyId, secretAccessKey });
+        return invalidate(bucket, `/${appendFolderSlash(folder) + newName}`, { accessKeyId, secretAccessKey });
       })
       .catch(err => console.log(err));
     });
