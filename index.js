@@ -133,7 +133,7 @@ function createCloudFrontInvalidation(filePaths) {
   if (skipInvalidation) {
     return Promise.resolve({});
   }
-  return invalidate(bucket, filePaths, { accessKeyId, secretAccessKey });
+  return invalidate(DistributionId, filePaths, { accessKeyId, secretAccessKey });
 }
 
 function invalidationMessage({ Invalidation }) {
