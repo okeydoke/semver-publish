@@ -22,13 +22,13 @@ const util = require('util');
 const replace = require('replace-in-file');
 
 const argMap = minimist(process.argv.slice(2)); // expects arguments in --key=value format
-const { USE_ROLE } = process.env;
 const region = 'us-east-1';
 const ALLOW_OVERWRITE = 'IM_DOING_SOMETHING_REALLY_BAD';
 
 const { accessKeyId, secretAccessKey, bucket: Bucket, bucket, distributionId: DistributionId, destFolder } = argMap;
 const srcFolder = argMap.srcFolder || './dist';
 const skipInvalidation = argMap.skipInvalidation !== undefined;
+const USE_ROLE = argMap.useRole !== undefined;
 const EXISTING_FILE_ERROR_MSG = 'Failed to upload! Destination path contains existing content';
 
 if (!Bucket) {
