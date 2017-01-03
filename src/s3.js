@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
-const { appendFolderSlash, debugMessage } = require('./utils');
+const { appendPathSlash, debugMessage } = require('./utils');
 
 function newClient(options) {
   return new AWS.S3(options);
@@ -14,9 +14,9 @@ function newClient(options) {
  * @param  {Object}   s3Client    S3 client
  * @param  {Object}   options
  */
-function getExistingFiles(Bucket, folder = '', s3Client) {
+function getExistingFiles(Bucket, destFolder = '', s3Client) {
   const MaxKeys = 100000; // max amount of objects return in response
-  const Prefix = appendFolderSlash(folder);
+  const Prefix = appendPathSlash(destFolder);
 
   const params = {
     Bucket,
@@ -50,20 +50,15 @@ function getExistingFiles(Bucket, folder = '', s3Client) {
   });
 }
 
-function uploadFile(Bucket, fileName, destFolder, folder = '', s3Client) {
-  if (!Bucket) {
-    throw new Error('`Bucket` argument required');
-  }
-  if (!fileName) {
-    throw new Error('`fileName` argument required');
-  }
-  if (!destFolder) {
-    throw new Error('`src` argument required');
-  }
+// Required Argument
+function Required(argumentName) {
+  throw new Error(`'${argumentName}' argument required`);
+}
 
-  const fileBuffer = fs.readFileSync(path.resolve(destFolder, fileName));
+function uploadFile({ Bucket = Required('Bucket'), destFolder = '', fileBuffer = null, fileName = Required('fileName'), s3Client, srcFolder = Required('srcFolder') }) {
+  const file = fileBuffer || fs.readFileSync(path.resolve(srcFolder, fileName));
   const fileExtension = (/\.[\w\d]+$/.exec(fileName) || [])[0];
-  const prefix = appendFolderSlash(folder);
+  const prefix = appendPathSlash(destFolder);
   const Key = `${prefix + fileName}`;
   const ContentType = mime.lookup(fileExtension) || 'application/octet-stream';
 
@@ -72,14 +67,14 @@ function uploadFile(Bucket, fileName, destFolder, folder = '', s3Client) {
     ContentType,
     Key,
     ACL: 'public-read',
-    Body: fileBuffer,
+    Body: file,
     CacheControl: 'max-age=31536000'
   };
 
   debugMessage('uploadFile params', params);
 
   return new Promise((resolve, reject) => {
-    console.log(`Uploading ${Bucket}:${Key}`);
+    debugMessage(`uploadFile:uploading ${Bucket}:${Key}`);
 
     s3Client.upload(params, (err, data) => {
       debugMessage('uploadFile:upload (err, data)', err, data);
@@ -92,7 +87,6 @@ function uploadFile(Bucket, fileName, destFolder, folder = '', s3Client) {
 }
 
 module.exports = {
-  appendFolderSlash,
   getExistingFiles,
   newClient,
   uploadFile
