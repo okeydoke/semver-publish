@@ -14,7 +14,7 @@
     "publish": "node index.js"
   },
   "bin": {
-    "semver-publish": "index.js"
+    "semver-publish": "./index.js"
   },
   "dependencies": {
     "aws-sdk": "^2.7.10",
