@@ -32,10 +32,10 @@ function getExistingFiles(Bucket, destFolder = '', s3Client) {
       debugMessage('uploadFile:listObjects (err, data)', err, data);
 
       if (err) {
-        // need to handle 403 differently as the api can return then when trying to list an object
-        // that doesn't exist due and a lack of permissions to preventing leaking of information
+        // need to handle 403 differently as the api can return them when trying to list an object
+        // that doesn't exist due to a lack of permissions to preventing leaking of information
         if (err.statusCode === 403) {
-          return resolve(null);
+          return resolve([]);
         }
         return reject(err);
       }
