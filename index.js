@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const {
   newClient,
   getExistingFiles: getExistingS3Files,
@@ -22,10 +23,18 @@ const util = require('util');
 const replace = require('replace-in-file');
 
 const argMap = minimist(process.argv.slice(2)); // expects arguments in --key=value format
-const region = 'us-east-1';
 const ALLOW_OVERWRITE = 'IM_DOING_SOMETHING_REALLY_BAD';
 
-const { accessKeyId, secretAccessKey, bucket: Bucket, bucket, distributionId: DistributionId, destFolder } = argMap;
+const {
+  bucket: Bucket,
+  distributionId: DistributionId,
+  accessKeyId,
+  bucket,
+  destFolder,
+  region = 'us-east-1',
+  secretAccessKey
+} = argMap;
+
 const srcFolder = argMap.srcFolder || './dist';
 const skipInvalidation = argMap.skipInvalidation !== undefined;
 const USE_ROLE = argMap.useRole !== undefined;
@@ -35,8 +44,8 @@ if (!Bucket) {
   errorMessage('Missing argument `bucket`\n');
 }
 
-if (!skipInvalidation && !DistributionId ) {
-   errorMessage('Missing argument `distributionId`\n');
+if (!skipInvalidation && !DistributionId) {
+  errorMessage('Missing argument `distributionId`\n');
 }
 
 if (!USE_ROLE && (!accessKeyId || !secretAccessKey)) {
