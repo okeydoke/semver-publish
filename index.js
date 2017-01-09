@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const {
   newClient,
   getExistingFiles: getExistingS3Files,
@@ -35,8 +37,8 @@ if (!Bucket) {
   errorMessage('Missing argument `bucket`\n');
 }
 
-if (!skipInvalidation && !DistributionId ) {
-   errorMessage('Missing argument `distributionId`\n');
+if (!skipInvalidation && !DistributionId) {
+  errorMessage('Missing argument `distributionId`\n');
 }
 
 if (!USE_ROLE && (!accessKeyId || !secretAccessKey)) {
