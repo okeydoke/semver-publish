@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const {
   newClient,
   getExistingFiles: getExistingS3Files,
@@ -37,7 +36,6 @@ const {
 
 const srcFolder = argMap.srcFolder || './dist';
 const skipInvalidation = argMap.skipInvalidation !== undefined;
-const USE_ROLE = argMap.useRole !== undefined;
 const EXISTING_FILE_ERROR_MSG = 'Failed to upload! Destination path contains existing content';
 
 if (!Bucket) {
@@ -48,7 +46,8 @@ if (!skipInvalidation && !DistributionId) {
   errorMessage('Missing argument `distributionId`\n');
 }
 
-if (!USE_ROLE && (!accessKeyId || !secretAccessKey)) {
+// Only throw when one is set but not both
+if (accessKeyId && !secretAccessKey || secretAccessKey && !accessKeyId) {
   errorMessage('Missing credentials');
 }
 

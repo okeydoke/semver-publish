@@ -30,14 +30,14 @@ The following command line arguments are available:
 - `--skipInvalidation` (*Optional*) - Skips creating a CloudFront invalidation when not passed must pass `--distributionId` argument.
 - `--destFolder` (*Optional*) - Path to upload files to on S3.
 - `--srcFolder`  (*Optional*) - Path to upload files from, defaults to `./dist`.
-- `--useRole` (__Required if `--secretAccessKey` and `--accessKeyId` not set__) - Will try to use the machine's IAM role.
-- `--accessKeyId` (__Required if `USE_ROLE=1` env variable not set__) - AWS access key ID. see `--useRole` if not set
-- `--secretAccessKey` (__Required if `USE_ROLE=1` env variable not set__) - AWS secret access key ID. see `--useRole` if not set
 - `--overwrite=IM_DOING_SOMETHING_REALY_BAD` (*Optional*) - Will allow overwriting existing files, __please__ don't use this as it mostly defeats the purpose of this module.
+- `--accessKeyId` (*Optional*) - AWS access key ID. Will be used if both `accessKeyId` & `secretAccessKey` are set otherwise will try to use the machine's IAM role  `accessKeyId`.
+- `--secretAccessKey` (*Optional*) - AWS secret access Key ID. Will be used if both `accessKeyId` & `secretAccessKey` are set otherwise will try to use the machine's IAM role  `accessKeyId`.
 
 ##TODO
+- [ ] write tests
 - [ ] Test how it handles binary files
 - [ ] Handle file paths other than source maps
-- [ ] Check CSS source maps path renaming works - see how it handles BASE64 encoding
+- [ ] Check how it handles BASE64 encoding CSS source maps
 - [ ] handle multiple semver patterns in fileName
 - [ ] Semver minor latest version as well
